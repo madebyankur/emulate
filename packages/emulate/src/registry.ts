@@ -29,6 +29,7 @@ const SERVICE_NAME_LIST = [
   "clerk",
   "linear",
   "twilio",
+  "auth0",
 ] as const;
 export type ServiceName = (typeof SERVICE_NAME_LIST)[number];
 export const SERVICE_NAMES: readonly ServiceName[] = SERVICE_NAME_LIST;
@@ -570,7 +571,6 @@ export const SERVICE_REGISTRY: Record<ServiceName, ServiceEntry> = {
       },
     },
   },
-
   twilio: {
     label: "Twilio API emulator",
     endpoints:
@@ -625,6 +625,50 @@ export const SERVICE_REGISTRY: Record<ServiceName, ServiceEntry> = {
         conversations: {
           services: [{ friendly_name: "Local Conversations" }],
         },
+      },
+    },
+  },
+  auth0: {
+    label: "Auth0 identity platform emulator",
+    endpoints:
+      "OIDC discovery, JWKS, authorize (Universal Login + PKCE), token (authorization_code, refresh_token, client_credentials, password-realm, device_code), userinfo, logout, Management API (users, clients, connections, roles, organizations, resource servers, client grants, tickets, tenant settings, guardian), log/event streams, attack protection, logs, inspector",
+    async load() {
+      const mod = await import("@emulators/auth0");
+      return { plugin: mod.auth0Plugin, seedFromConfig: mod.seedFromConfig };
+    },
+    defaultFallback(cfg) {
+      const firstEmail = (cfg?.users as Array<{ email?: string }> | undefined)?.[0]?.email ?? "user@example.com";
+      return { login: firstEmail, id: 1, scopes: ["openid", "profile", "email"] };
+    },
+    initConfig: {
+      auth0: {
+        users: [
+          {
+            email: "user@example.com",
+            email_verified: true,
+            password: "Password123!",
+            name: "Test User",
+            connection: "Username-Password-Authentication",
+          },
+        ],
+        clients: [
+          {
+            client_id: "auth0_emulate_client",
+            client_secret: "auth0_emulate_secret",
+            name: "My Auth0 App",
+            app_type: "regular_web",
+            callbacks: ["http://localhost:3000/api/auth/callback"],
+            allowed_logout_urls: ["http://localhost:3000"],
+            grant_types: ["authorization_code", "refresh_token", "client_credentials", "password"],
+          },
+        ],
+        resource_servers: [
+          {
+            name: "My API",
+            identifier: "https://api.example.com",
+            scopes: ["read:items", "write:items"],
+          },
+        ],
       },
     },
   },

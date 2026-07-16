@@ -128,3 +128,82 @@ google:
       mime_type: application/vnd.google-apps.folder
       parent_ids:
         - root
+
+auth0:
+  users:
+    - email: user@example.com
+      email_verified: true
+      password: Password123!
+      name: Test User
+      connection: Username-Password-Authentication
+      roles: [admin]
+  clients:
+    - client_id: auth0_emulate_client
+      client_secret: auth0_emulate_secret
+      name: My Auth0 App
+      app_type: regular_web
+      callbacks:
+        - http://localhost:3000/api/auth/callback
+      allowed_logout_urls:
+        - http://localhost:3000
+      grant_types: [authorization_code, refresh_token, client_credentials, password]
+  connections:
+    - name: Username-Password-Authentication
+      strategy: auth0
+  resource_servers:
+    - name: My API
+      identifier: https://api.example.com
+      scopes: [read:items, write:items]
+      # enforce_policies turns on RBAC: access tokens for this API gain a
+      # `permissions` claim derived from the user's roles + direct grants.
+      enforce_policies: true
+  client_grants:
+    - client_id: auth0_emulate_client
+      audience: https://api.example.com
+      scopes: [read:items, write:items]
+  roles:
+    - name: admin
+      description: Administrator
+      # Permissions this role grants on an API (surface in the permissions claim).
+      permissions:
+        - resource_server_identifier: https://api.example.com
+          permission_name: read:items
+  # Permissions granted directly to a user (independent of roles).
+  user_permissions:
+    - user: user@example.com
+      resource_server_identifier: https://api.example.com
+      permission_name: write:items
+  organizations:
+    - name: acme
+      display_name: Acme Inc
+      members: [user@example.com]
+  # Extensibility: Actions run on login (and other triggers). Provide a
+  # declarative `config` (no code) or real JS `code` executed in a sandbox.
+  actions:
+    - name: add-department-claim
+      trigger: post-login
+      config:
+        addClaims:
+          idToken:
+            "https://example.com/department": engineering
+    - name: enrich-from-code
+      trigger: post-login
+      code: |
+        exports.onExecutePostLogin = async (event, api) => {
+          api.idToken.setCustomClaim("https://example.com/source", "action");
+        };
+  # Legacy Rules (executed JS) are supported for older tenants.
+  rules:
+    - name: add-country
+      script: |
+        function (user, context, callback) {
+          context.idToken["https://example.com/country"] = "US";
+          callback(null, user, context);
+        }
+  # MFA enforcement policy. always_on challenges every login; you can also
+  # scope it to specific connections or users.
+  mfa:
+    always_on: false
+    required_connections: []
+    required_users: []
+  breached_passwords: [password, 123456, qwerty]

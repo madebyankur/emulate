@@ -1,0 +1,94 @@
+# Auth0
+
+Stateful Auth0 identity platform emulation covering OAuth 2.0 / OIDC, Management API v2, and the platform features thin HTTP mocks usually omit: RBAC permission claims, Actions/Rules/Hooks, passwordless, MFA, SAML/WS-Fed/CIBA, log streams, event streams, and stateful attack protection. Access tokens are RS256 JWTs minted for the requested API `audience`, and the issuer carries Auth0's trailing slash (`http://localhost:4013/`) so SDK token verification passes.
+
+## OIDC / Authentication API
+
+- `GET /.well-known/openid-configuration` - OIDC discovery
+- `GET /.well-known/jwks.json` - JSON Web Key Set (RS256)
+- `GET /authorize` - Universal Login with a seeded-user picker and PKCE (`S256`/`plain`); accepts a PAR `request_uri`
+- `POST /oauth/token` - grants: `authorization_code`, `refresh_token` (with rotation), `client_credentials`, `password`, `http://auth0.com/oauth/grant-type/password-realm`, `urn:ietf:params:oauth:grant-type:device_code`, `http://auth0.com/oauth/grant-type/passwordless/otp`, the `mfa-otp`/`mfa-oob`/`mfa-recovery-code` grants, and `urn:openid:params:grant-type:ciba`
+- `POST /oauth/device/code` - device authorization flow
+- `POST /oauth/par` - Pushed Authorization Requests (RFC 9126)
+- `POST /oauth/revoke` - revoke a refresh token
+- `GET /userinfo` - OIDC user info
+- `GET /v2/logout` and `GET /oidc/logout` - logout with `returnTo` / `post_logout_redirect_uri` validation
+- `POST /dbconnections/signup` - public user self-registration
+- `POST /dbconnections/change_password` - issue a password-change ticket
+- `POST /passwordless/start`, `POST /passwordless/verify` - email/SMS one-time-code login
+- `POST /mfa/associate`, `POST /mfa/challenge`, `GET /mfa/authenticators` - MFA enrollment and challenge
+- `POST /oidc/register` - dynamic client registration (RFC 7591)
+- `POST /bc-authorize` - CIBA backchannel authentication
+
+## RBAC and token claims
+
+Access tokens carry `azp`, `scope`, and `gty`. When a resource server sets `enforce_policies: true`, tokens for that API audience also include a `permissions` claim derived from the user's roles and direct grants. Organization logins emit `org_id` and `org_name`. Actions can add arbitrary custom (namespaced) claims to id and access tokens.
+
+- User permissions: `GET/POST/DELETE /api/v2/users/:id/permissions`
+- Role permissions: `GET/POST/DELETE /api/v2/roles/:id/permissions`
+- Identities (account linking): `POST /api/v2/users/:id/identities`, `DELETE /api/v2/users/:id/identities/:provider/:user_id`
+
+## Extensibility: Actions, Rules, Hooks
+
+Actions run on the post-login and credentials-exchange triggers. Seed them declaratively (a `config` object) or with real JavaScript (`code`) executed in a `node:vm` sandbox exposing the Auth0 `event`/`api` objects: `api.idToken.setCustomClaim`, `api.accessToken.setCustomClaim`, `api.access.deny`, `api.multifactor.enable`, `api.user.setAppMetadata`. Legacy Rules and Hooks share the same engine.
+
+- Actions: `GET/POST /api/v2/actions/actions`, `/api/v2/actions/actions/:id` (+ `/deploy`, `/test`), `/api/v2/actions/triggers`, `/api/v2/actions/triggers/:trigger/bindings`
+- Rules: `GET/POST/PATCH/DELETE /api/v2/rules`
+- Hooks: `GET/POST/PATCH/DELETE /api/v2/hooks`
+
+## Enterprise protocols
+
+- SAML: `GET /samlp/:clientId` (RS256-signed `<samlp:Response>` to the client ACS) and `GET /samlp/metadata/:clientId`
+- WS-Fed: `GET /wsfed/:clientId` (signed SAML 1.1 assertion via `wresult`) and the FederationMetadata document
+- Passkeys: `POST /passkey/challenge`, `POST /passkey/register` (minimal ceremony)
+
+These assertions are signed with the tenant RS256 key (verifiable against the published metadata) but use a minimal canonicalization, enough for SDK signature verification but not a full SAML IdP.
+
+## Management API v2
+
+Authenticate with a Bearer access token minted via the `client_credentials` grant for the `{baseUrl}/api/v2/` audience.
+
+- Users: `GET/POST /api/v2/users`, `GET/PATCH/DELETE /api/v2/users/:id`, `GET /api/v2/users-by-email`, `GET/POST/DELETE /api/v2/users/:id/roles`, `/permissions`, `/enrollments`, `/organizations`, `/sessions`
+- Clients: `GET/POST /api/v2/clients`, `GET/PATCH/DELETE /api/v2/clients/:id`
+- Connections: `GET/POST /api/v2/connections`, `GET/PATCH/DELETE /api/v2/connections/:id`
+- Roles: `GET/POST /api/v2/roles`, `GET/DELETE /api/v2/roles/:id`, `GET /api/v2/roles/:id/users`, `GET/POST/DELETE /api/v2/roles/:id/permissions`
+- Organizations: `GET/POST /api/v2/organizations`, `GET/DELETE /api/v2/organizations/:id`, `/members`, `/members/:uid/roles`, `/enabled_connections`, `/invitations`, `/client-grants`
+- Resource Servers: `GET/POST /api/v2/resource-servers`, `GET/PATCH/DELETE /api/v2/resource-servers/:id` (toggle `enforce_policies`)
+- Client Grants: `GET/POST /api/v2/client-grants`, `DELETE /api/v2/client-grants/:id`
+- Tickets: `POST /api/v2/tickets/email-verification`, `POST /api/v2/tickets/password-change`
+- Tenant settings: `GET/PATCH /api/v2/tenants/settings`
+- Guardian: `GET /api/v2/guardian/factors`, `PUT /api/v2/guardian/factors/:name`, `GET/DELETE /api/v2/guardian/enrollments/:id`
+- Jobs: `POST /api/v2/jobs/verification-email`, `/users-imports`, `/users-exports`, `GET /api/v2/jobs/:id`
+- Branding & prompts: `GET/PATCH /api/v2/branding`, `/branding/themes/:id`, `/prompts`, `/prompts/:prompt/custom-text/:lang`
+- Email: `GET/PATCH/PUT /api/v2/email-templates/:name`, `GET/PATCH /api/v2/emails/provider`
+- Keys: `GET /api/v2/keys/signing` (+ `/rotate`, `/:kid/revoke`), `GET /api/v2/keys/encryption`
+- Sessions & tokens: `GET/DELETE /api/v2/sessions/:id`, `DELETE /api/v2/refresh-tokens/:id`
+- Grants, device credentials, custom domains, flows, forms, network ACLs, blacklists, anomaly blocks, stats
+- Logs: `GET /api/v2/logs`
+
+## Log Streams and Event Streams
+
+Log streams and event streams are distinct subsystems, matching Auth0:
+
+- Log streams (`/api/v2/log-streams`) receive raw tenant **log records** (e.g. `sapi`, `seacft`, `fp`).
+- Event streams (`/api/v2/event-streams`) receive typed **domain events** (`user.created`, `user.updated`, `user.deleted`, `login.succeeded`, `login.failed`, `user.blocked`) filtered by `subscriptions`.
+
+A single action fires both where appropriate: creating a user emits a log record to log streams and a `user.created` event to subscribed event streams. Recorded deliveries are observable at `GET /_emulate/stream-deliveries`.
+
+## Attack Protection
+
+Stateful enforcement, not just config echo:
+
+- `GET/PATCH /api/v2/attack-protection/brute-force-protection`
+- `GET/PATCH /api/v2/attack-protection/suspicious-ip-throttling`
+- `GET/PATCH /api/v2/attack-protection/breached-password-detection`
+- `GET/PATCH /api/v2/attack-protection/bot-detection`
+- `GET/DELETE /api/v2/user-blocks` and `GET/DELETE /api/v2/user-blocks/:id`
+
+## Inspector
+
+- `GET /` - tabbed inspector for users, applications, connections, organizations, roles, APIs, Actions/Rules, MFA enrollments, sessions, streams, attack-protection blocks, and logs
+
+## Notes and limits
+
+Action/Rule/Hook code runs in a `node:vm` sandbox with a 1s timeout, a fidelity convenience rather than a security boundary (the emulator runs trusted local config). SAML/WS-Fed assertions are RS256-signed with a minimal canonicalization (sufficient for SDK signature verification, not a full SAML IdP: no encryption, single NameID format). Not implemented: HS256 token signing, real TOTP/WebAuthn cryptographic verification (a deterministic OTP `000000` is accepted), custom database action scripts, and exact production rate limiting.

@@ -19,6 +19,7 @@ export const allDocsPages: NavItem[] = [
   { name: "Microsoft Entra ID", href: "/docs/microsoft" },
   { name: "AWS", href: "/docs/aws" },
   { name: "Okta", href: "/docs/okta" },
+  { name: "Auth0", href: "/docs/auth0" },
   { name: "MongoDB Atlas", href: "/docs/mongoatlas" },
   { name: "Resend", href: "/docs/resend" },
   { name: "Stripe", href: "/docs/stripe" },
