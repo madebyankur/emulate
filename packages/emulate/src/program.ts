@@ -127,6 +127,9 @@ Configuration:
 Twilio API coverage:
   Accounts, API keys, phone numbers, Messaging, Verify, Voice, Conversations, webhooks, simulators, and inspector.
 
+Auth0 API coverage:
+  OAuth 2.0 / OIDC flows, Management API v2, RBAC permissions, Actions, passwordless, MFA, streams, attack protection, logs, and inspector.
+
 Slack interactivity:
   Configure slack.oauth_apps[].interactivity_url and slack.signing_secret for signed button and modal callbacks.
   POST /_slack/simulate/block-actions clicks a stored button; POST /_slack/simulate/view-submission submits a modal.

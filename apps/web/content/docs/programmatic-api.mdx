@@ -88,7 +88,7 @@ afterAll(() => Promise.all([github.close(), vercel.close()]))
     <tr>
       <td><code>service</code></td>
       <td><em>(required)</em></td>
-      <td>Service name: <code>'vercel'</code>, <code>'github'</code>, <code>'google'</code>, <code>'slack'</code>, <code>'apple'</code>, <code>'microsoft'</code>, <code>'okta'</code>, <code>'aws'</code>, <code>'resend'</code>, <code>'stripe'</code>, <code>'mongoatlas'</code>, <code>'clerk'</code>, <code>'linear'</code>, or <code>'twilio'</code></td>
+      <td>Service name: <code>'vercel'</code>, <code>'github'</code>, <code>'google'</code>, <code>'slack'</code>, <code>'apple'</code>, <code>'microsoft'</code>, <code>'okta'</code>, <code>'aws'</code>, <code>'resend'</code>, <code>'stripe'</code>, <code>'mongoatlas'</code>, <code>'clerk'</code>, <code>'linear'</code>, or <code>'twilio'</code>, or <code>'auth0'</code></td>
     </tr>
     <tr>
       <td><code>port</code></td>
@@ -172,6 +172,7 @@ npm install @emulators/github @emulators/google @emulators/linear @emulators/twi
     <tr><td><code>@emulators/microsoft</code></td><td>Microsoft Entra ID, Graph API</td></tr>
     <tr><td><code>@emulators/aws</code></td><td>AWS S3, SQS, IAM, STS</td></tr>
     <tr><td><code>@emulators/okta</code></td><td>Okta identity provider / OIDC</td></tr>
+    <tr><td><code>@emulators/auth0</code></td><td>Auth0 OIDC, Management API, streams, attack protection</td></tr>
     <tr><td><code>@emulators/mongoatlas</code></td><td>MongoDB Atlas Admin API + Data API</td></tr>
     <tr><td><code>@emulators/resend</code></td><td>Resend email API</td></tr>
     <tr><td><code>@emulators/stripe</code></td><td>Stripe billing and payments API</td></tr>

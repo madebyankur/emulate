@@ -32,6 +32,7 @@ All services listen on IPv4 loopback (`127.0.0.1`) by default:
 | Clerk     | 4011        |
 | Linear    | 4012        |
 | Twilio    | 4013        |
+| Auth0     | 4014        |
 
 ## CLI
 
@@ -110,7 +111,7 @@ For GitHub App tests, inspect secret-free minted installation-token metadata at 
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `service` | *(required)* | `'vercel'`, `'github'`, `'google'`, `'slack'`, `'apple'`, `'microsoft'`, `'okta'`, `'aws'`, `'resend'`, `'stripe'`, `'mongoatlas'`, `'clerk'`, `'linear'`, or `'twilio'` |
+| `service` | *(required)* | `'vercel'`, `'github'`, `'google'`, `'slack'`, `'apple'`, `'microsoft'`, `'okta'`, `'aws'`, `'resend'`, `'stripe'`, `'mongoatlas'`, `'clerk'`, `'linear'`, `'twilio'`, or `'auth0'` |
 | `port` | `4000` | Port for the HTTP server |
 | `hostname` | `127.0.0.1` | Listening address for built-in and custom emulators |
 | `seed` | none | Inline seed data (same shape as YAML config) |

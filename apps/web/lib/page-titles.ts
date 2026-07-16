@@ -18,6 +18,7 @@ export const PAGE_TITLES: Record<string, string> = {
   mongoatlas: "MongoDB Atlas",
   resend: "Resend",
   stripe: "Stripe",
+  auth0: "Auth0",
   authentication: "Authentication",
   architecture: "Architecture",
 };

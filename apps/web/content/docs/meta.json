@@ -19,6 +19,7 @@
     "microsoft",
     "aws",
     "okta",
+    "auth0",
     "mongoatlas",
     "resend",
     "stripe",
