@@ -23,10 +23,8 @@ All services start with sensible defaults. No config file needed:
 - **MongoDB Atlas** on `http://localhost:4010`
 - **Clerk** on `http://localhost:4011`
 - **Linear** on `http://localhost:4012`
-  <<<<<<< HEAD
-- # **Twilio** on `http://localhost:4013`
-- **Auth0** on `http://localhost:4013`
-  > > > > > > > 9798579 (feat: add auth0 endpoints to emulate)
+- **Twilio** on `http://localhost:4013`
+- **Auth0** on `http://localhost:4014`
 
 ## CLI
 
@@ -155,15 +153,10 @@ afterAll(() => Promise.all([github.close(), vercel.close()]));
 | Option | Default | Description |
 | ------ | ------- | ----------- |
 
-<<<<<<< HEAD
-| `service` | _(required)_ | Service name: `'vercel'`, `'github'`, `'google'`, `'slack'`, `'apple'`, `'microsoft'`, `'okta'`, `'aws'`, `'resend'`, `'stripe'`, `'mongoatlas'`, `'clerk'`, `'linear'`, or `'twilio'` |
-=======
-| `service` | _(required)_ | Service name: `'vercel'`, `'github'`, `'google'`, `'slack'`, `'apple'`, `'microsoft'`, `'okta'`, `'aws'`, `'resend'`, `'stripe'`, `'mongoatlas'`, `'clerk'`, `'linear'`, or `'auth0'` |
-
-> > > > > > > 9798579 (feat: add auth0 endpoints to emulate)
-> > > > > > > | `port` | `4000` | Port for the HTTP server |
-> > > > > > > | `seed` | none | Inline seed data (same shape as YAML config) |
-> > > > > > > | `baseUrl` | none | Override advertised base URL. Per-service `baseUrl` in seed config takes highest priority, then this option, then `EMULATE_BASE_URL` env var (supports `{service}`), then `PORTLESS_URL` (supports `{service}`, automatically set by the `portless` CLI wrapper), then `http://localhost:<port>`. |
+| `service` | _(required)_ | Service name: `'vercel'`, `'github'`, `'google'`, `'slack'`, `'apple'`, `'microsoft'`, `'okta'`, `'aws'`, `'resend'`, `'stripe'`, `'mongoatlas'`, `'clerk'`, `'linear'`, `'twilio'`, or `'auth0'` |
+| `port` | `4000` | Port for the HTTP server |
+| `seed` | none | Inline seed data (same shape as YAML config) |
+| `baseUrl` | none | Override advertised base URL. Per-service `baseUrl` in seed config takes highest priority, then this option, then `EMULATE_BASE_URL` env var (supports `{service}`), then `PORTLESS_URL` (supports `{service}`, automatically set by the `portless` CLI wrapper), then `http://localhost:<port>`. |
 
 ### Instance methods
 
@@ -968,7 +961,7 @@ Current Twilio limits: no carrier delivery, A2P 10DLC, toll-free verification, r
 
 ## Auth0 API
 
-Stateful Auth0 platform emulation covering the Authentication API, Management API v2, and the platform features that thin HTTP mocks usually omit: RBAC permission claims, Actions/Rules/Hooks, passwordless, MFA, SAML/WS-Fed/CIBA, log streams, event streams, and attack protection. Access tokens are RS256 JWTs minted for the requested API `audience`, and the issuer carries Auth0's trailing slash (`http://localhost:4013/`) so SDK token verification passes.
+Stateful Auth0 platform emulation covering the Authentication API, Management API v2, and the platform features that thin HTTP mocks usually omit: RBAC permission claims, Actions/Rules/Hooks, passwordless, MFA, SAML/WS-Fed/CIBA, log streams, event streams, and attack protection. Access tokens are RS256 JWTs minted for the requested API `audience`, and the issuer carries Auth0's trailing slash (`http://localhost:4014/`) so SDK token verification passes.
 
 ### OIDC / Authentication API
 
