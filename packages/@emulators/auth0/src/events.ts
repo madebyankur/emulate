@@ -7,7 +7,7 @@ const MAX_LOG_EVENTS = 1000;
 
 // Record a tenant log event and fan it out to log streams. Auth0 log event
 // `type` codes are short (e.g. "s" success login, "f" failed login, "ss"
-// signup, "sapi" success api operation) — we keep them realistic.
+// signup, "sapi" success api operation): we keep them realistic.
 export interface LogInput {
   type: string;
   description: string;

@@ -21,7 +21,7 @@ const TABS: InspectorTab[] = [
 type TabId = (typeof TABS)[number]["id"];
 
 export function inspectorRoutes({ app, store }: RouteContext): void {
-  const as = () => getAuth0Store(store);
+  const as = getAuth0Store(store);
 
   app.get("/", (c) => {
     const requested = c.req.query("tab") ?? "users";
@@ -68,8 +68,8 @@ export function inspectorRoutes({ app, store }: RouteContext): void {
   });
 
   function usersView(): string {
-    const rows = as()
-      .users.all()
+    const rows = as.users
+      .all()
       .map((u) => [
         escapeHtml(u.user_id),
         escapeHtml(u.email),
@@ -85,8 +85,8 @@ export function inspectorRoutes({ app, store }: RouteContext): void {
   }
 
   function clientsView(): string {
-    const rows = as()
-      .clients.all()
+    const rows = as.clients
+      .all()
       .map((cl) => [
         escapeHtml(cl.name),
         escapeHtml(cl.client_id),
@@ -101,19 +101,19 @@ export function inspectorRoutes({ app, store }: RouteContext): void {
   }
 
   function connectionsView(): string {
-    const rows = as()
-      .connections.all()
+    const rows = as.connections
+      .all()
       .map((cn) => [escapeHtml(cn.name), escapeHtml(cn.strategy), escapeHtml(cn.enabled_clients.join(", "))]);
     return section("Connections", table(["Name", "Strategy", "Enabled Clients"], rows, "No connections."));
   }
 
   function orgsView(): string {
-    const rows = as()
-      .organizations.all()
+    const rows = as.organizations
+      .all()
       .map((o) => [
         escapeHtml(o.name),
         escapeHtml(o.display_name ?? ""),
-        escapeHtml(String(as().orgMembers.findBy("org_id", o.org_id).length)),
+        escapeHtml(String(as.orgMembers.findBy("org_id", o.org_id).length)),
         escapeHtml(o.enabled_connections.join(", ")),
       ]);
     return section(
@@ -123,22 +123,22 @@ export function inspectorRoutes({ app, store }: RouteContext): void {
   }
 
   function rolesView(): string {
-    const rows = as()
-      .roles.all()
+    const rows = as.roles
+      .all()
       .map((r) => [
         escapeHtml(r.name),
         escapeHtml(r.description ?? ""),
-        escapeHtml(String(as().roleAssignments.findBy("role_id", r.role_id).length)),
+        escapeHtml(String(as.roleAssignments.findBy("role_id", r.role_id).length)),
       ]);
     return section("Roles", table(["Name", "Description", "Assignees"], rows, "No roles."));
   }
 
   function apisView(): string {
-    const rows = as()
-      .resourceServers.all()
+    const rows = as.resourceServers
+      .all()
       .map((rs) => [escapeHtml(rs.name), escapeHtml(rs.identifier), escapeHtml(rs.scopes.join(", "))]);
-    const grantRows = as()
-      .clientGrants.all()
+    const grantRows = as.clientGrants
+      .all()
       .map((g) => [escapeHtml(g.client_id), escapeHtml(g.audience), escapeHtml(g.scopes.join(", "))]);
     return (
       section("Resource Servers (APIs)", table(["Name", "Identifier (Audience)", "Scopes"], rows, "No APIs.")) +
@@ -147,16 +147,16 @@ export function inspectorRoutes({ app, store }: RouteContext): void {
   }
 
   function actionsView(): string {
-    const actionRows = as()
-      .actions.all()
+    const actionRows = as.actions
+      .all()
       .map((a) => [
         escapeHtml(a.name),
         escapeHtml(a.trigger),
         escapeHtml(a.code ? "code" : "config"),
         escapeHtml(a.deployed ? "deployed" : "draft"),
       ]);
-    const ruleRows = as()
-      .rules.all()
+    const ruleRows = as.rules
+      .all()
       .map((r) => [escapeHtml(r.name), escapeHtml(String(r.order)), escapeHtml(r.enabled ? "enabled" : "disabled")]);
     return (
       section("Actions", table(["Name", "Trigger", "Kind", "Status"], actionRows, "No actions.")) +
@@ -165,15 +165,15 @@ export function inspectorRoutes({ app, store }: RouteContext): void {
   }
 
   function mfaView(): string {
-    const rows = as()
-      .userEnrollments.all()
+    const rows = as.userEnrollments
+      .all()
       .map((e) => [escapeHtml(e.user_id), escapeHtml(e.type), escapeHtml(e.oob_channel ?? ""), escapeHtml(e.status)]);
     return section("MFA Enrollments", table(["User", "Type", "Channel", "Status"], rows, "No enrollments."));
   }
 
   function sessionsView(): string {
-    const rows = as()
-      .sessions.all()
+    const rows = as.sessions
+      .all()
       .slice(-50)
       .reverse()
       .map((s) => [
@@ -186,8 +186,8 @@ export function inspectorRoutes({ app, store }: RouteContext): void {
   }
 
   function streamsView(): string {
-    const streamRows = as()
-      .streams.all()
+    const streamRows = as.streams
+      .all()
       .map((s) => [
         escapeHtml(s.name),
         escapeHtml(s.kind),
@@ -195,8 +195,8 @@ export function inspectorRoutes({ app, store }: RouteContext): void {
         escapeHtml(s.sink_url ?? ""),
         escapeHtml(s.kind === "event" ? s.subscriptions.join(", ") : "all logs"),
       ]);
-    const deliveryRows = as()
-      .streamDeliveries.all()
+    const deliveryRows = as.streamDeliveries
+      .all()
       .slice(-30)
       .reverse()
       .map((d) => [
@@ -216,8 +216,8 @@ export function inspectorRoutes({ app, store }: RouteContext): void {
   }
 
   function protectionView(): string {
-    const blockRows = as()
-      .userBlocks.all()
+    const blockRows = as.userBlocks
+      .all()
       .map((b) => [
         escapeHtml(b.identifier),
         escapeHtml(b.ip),
@@ -231,8 +231,8 @@ export function inspectorRoutes({ app, store }: RouteContext): void {
   }
 
   function logsView(): string {
-    const rows = as()
-      .logEvents.all()
+    const rows = as.logEvents
+      .all()
       .slice(-50)
       .reverse()
       .map((l) => [

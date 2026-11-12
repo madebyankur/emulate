@@ -144,7 +144,7 @@ export function mfaRoutes({ app, store }: RouteContext): void {
     const enrollment = as.userEnrollments.insert({
       enrollment_id: `dev_${generateAuth0Id().slice(0, 16)}`,
       user_id: challenge.userId,
-      type: type === "oob" ? "oob" : type,
+      type,
       oob_channel: type === "oob" ? (oobChannels[0] ?? "sms") : null,
       secret,
       name: typeof body.name === "string" ? body.name : null,

@@ -24,12 +24,12 @@ async function parseBody(c: Context<AppEnv>): Promise<Record<string, string>> {
 }
 
 // Authentication API database-connection endpoints: public signup and the
-// change-password trigger. These are unauthenticated (client_id only) — the
+// change-password trigger. These are unauthenticated (client_id only): the
 // surface embedded-login apps depend on and thin mocks skip.
 export function dbConnectionRoutes({ app, store, baseUrl }: RouteContext): void {
   const as = getAuth0Store(store);
 
-  // POST /dbconnections/signup — register a new user in a database connection.
+  // POST /dbconnections/signup: register a new user in a database connection.
   app.post("/dbconnections/signup", async (c) => {
     const body = await parseBody(c);
     const email = body.email ?? "";
@@ -96,7 +96,7 @@ export function dbConnectionRoutes({ app, store, baseUrl }: RouteContext): void 
     });
   });
 
-  // POST /dbconnections/change_password — issue a password-change ticket. Auth0
+  // POST /dbconnections/change_password: issue a password-change ticket. Auth0
   // returns a plain-text confirmation; we also mint a consumable ticket.
   app.post("/dbconnections/change_password", async (c) => {
     const body = await parseBody(c);

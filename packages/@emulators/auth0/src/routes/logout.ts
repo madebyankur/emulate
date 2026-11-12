@@ -2,7 +2,7 @@ import type { RouteContext } from "@emulators/core";
 import { matchesRedirectUri } from "@emulators/core";
 import { getAuth0Store } from "../store.js";
 
-// GET /v2/logout — Auth0 logout. Redirects to returnTo when provided and
+// GET /v2/logout: Auth0 logout. Redirects to returnTo when provided and
 // allowed by a registered client's allowed_logout_urls.
 export function logoutRoutes({ app, store }: RouteContext): void {
   const as = getAuth0Store(store);
@@ -24,7 +24,7 @@ export function logoutRoutes({ app, store }: RouteContext): void {
     return c.redirect(returnTo, 302);
   });
 
-  // GET /oidc/logout — OIDC RP-Initiated Logout (spec-compliant alias). Honors
+  // GET /oidc/logout: OIDC RP-Initiated Logout (spec-compliant alias). Honors
   // post_logout_redirect_uri + id_token_hint instead of returnTo + client_id.
   app.get("/oidc/logout", (c) => {
     const redirectUri = c.req.query("post_logout_redirect_uri");

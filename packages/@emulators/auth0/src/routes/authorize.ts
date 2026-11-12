@@ -9,7 +9,7 @@ import { recordLog } from "../events.js";
 import { getPushedRequests } from "./protocols.js";
 import { renderUniversalLogin, SERVICE_LABEL } from "./ui.js";
 
-// GET /authorize — Universal Login. Validates the client and redirect_uri, then
+// GET /authorize: Universal Login. Validates the client and redirect_uri, then
 // renders the seeded-user picker. PKCE params are carried through hidden fields.
 export function authorizeRoutes({ app, store }: RouteContext): void {
   const as = getAuth0Store(store);

@@ -32,7 +32,7 @@ export function protocolRoutes(ctx: RouteContext): void {
 }
 
 function parRoutes({ app, store }: RouteContext): void {
-  // POST /oauth/par — store the pushed authorization params, return request_uri.
+  // POST /oauth/par: store the pushed authorization params, return request_uri.
   app.post("/oauth/par", async (c) => {
     const body = await readForm(c);
     if (!body.client_id) return oauthError(c, 400, "invalid_request", "client_id is required.");
@@ -50,7 +50,7 @@ function parRoutes({ app, store }: RouteContext): void {
 function registrationRoutes({ app, store, baseUrl }: RouteContext): void {
   const as = getAuth0Store(store);
 
-  // POST /oidc/register — Dynamic Client Registration (RFC 7591).
+  // POST /oidc/register: Dynamic Client Registration (RFC 7591).
   app.post("/oidc/register", async (c) => {
     const body = (await readJson(c)) as Record<string, unknown>;
     const redirectUris = Array.isArray(body.redirect_uris)
@@ -130,11 +130,11 @@ function passkeyRoutes({ app, store }: RouteContext): void {
   });
 }
 
-// Deprecated endpoints — return correctly shaped responses / deprecation errors.
+// Deprecated endpoints: return correctly shaped responses / deprecation errors.
 function legacyStubRoutes({ app, store, baseUrl }: RouteContext): void {
   const as = getAuth0Store(store);
 
-  // GET /tokeninfo — legacy id_token introspection (deprecated). Auth0 disabled
+  // GET /tokeninfo: legacy id_token introspection (deprecated). Auth0 disabled
   // this for new tenants; return the deprecation error shape.
   app.get("/tokeninfo", (c) =>
     c.json({ error: "access_denied", error_description: "The /tokeninfo endpoint is disabled for this tenant." }, 403),
@@ -143,7 +143,7 @@ function legacyStubRoutes({ app, store, baseUrl }: RouteContext): void {
     c.json({ error: "access_denied", error_description: "The /tokeninfo endpoint is disabled for this tenant." }, 403),
   );
 
-  // POST /oauth/ro — legacy resource-owner password (superseded by password
+  // POST /oauth/ro: legacy resource-owner password (superseded by password
   // grant on /oauth/token). Return the deprecation error.
   app.post("/oauth/ro", (c) =>
     oauthError(
@@ -154,7 +154,7 @@ function legacyStubRoutes({ app, store, baseUrl }: RouteContext): void {
     ),
   );
 
-  // POST /co/authenticate — legacy cross-origin authentication first step.
+  // POST /co/authenticate: legacy cross-origin authentication first step.
   // Returns a login_ticket the way the real endpoint does.
   app.post("/co/authenticate", async (c) => {
     const body = (await readJson(c)) as Record<string, unknown>;

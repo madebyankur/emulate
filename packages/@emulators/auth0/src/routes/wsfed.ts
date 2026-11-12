@@ -7,7 +7,7 @@ import { issuerFromBaseUrl } from "../helpers.js";
 import { renderUniversalLogin, SERVICE_LABEL } from "./ui.js";
 import { recordLog } from "../events.js";
 
-// Minimal-but-real WS-Federation IdP. /wsfed/:clientId (wsignin1.0) renders
+// Minimal WS-Federation IdP. /wsfed/:clientId (wsignin1.0) renders
 // Universal Login then form-POSTs a wresult containing a signed SAML 1.1
 // assertion to the wreply (client callback). Shares the RS256 signing key with
 // the rest of the emulator so the assertion verifies against the metadata cert.
@@ -113,7 +113,7 @@ async function buildSaml11Assertion(args: {
   const { issuer, audience, user } = args;
   const { publicDerB64 } = await nodeKeys();
   const assertionId = `_${randomUUID().replace(/-/g, "")}`;
-  const now = new Date(Date.now()).toISOString();
+  const now = new Date().toISOString();
   const notOnOrAfter = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
   const body =

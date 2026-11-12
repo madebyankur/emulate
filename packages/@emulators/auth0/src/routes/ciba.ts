@@ -30,7 +30,7 @@ export function getCibaRequests(store: Store): Map<string, CibaRequest> {
 export function cibaRoutes({ app, store }: RouteContext): void {
   const as = getAuth0Store(store);
 
-  // POST /bc-authorize — start a backchannel authentication request.
+  // POST /bc-authorize: start a backchannel authentication request.
   app.post("/bc-authorize", async (c) => {
     const body = await readBody(c);
     const clientId = str(body.client_id);
@@ -51,7 +51,7 @@ export function cibaRoutes({ app, store }: RouteContext): void {
     return c.json({ auth_req_id: authReqId, expires_in: expiresIn, interval: 5 });
   });
 
-  // POST /_emulate/ciba/approve — test helper to approve a pending request.
+  // POST /_emulate/ciba/approve: test helper to approve a pending request.
   app.post("/_emulate/ciba/approve", async (c) => {
     const body = await readBody(c);
     const authReqId = str(body.auth_req_id);

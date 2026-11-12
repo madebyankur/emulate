@@ -17,7 +17,7 @@ function createApp() {
   const tokenMap: TokenMap = new Map();
   const app = new Hono();
   app.use("*", authMiddleware(tokenMap));
-  auth0Plugin.register(app as never, store, webhooks, base, tokenMap);
+  auth0Plugin.register(app, store, webhooks, base, tokenMap);
   seedFromConfig(store, base, {
     users: [
       { email: "alice@example.com", password: "alice-pw", email_verified: true, name: "Alice", roles: ["admin"] },
@@ -95,8 +95,8 @@ describe("OIDC discovery", () => {
 
 describe("authorization code + PKCE", () => {
   async function authorize(app: Hono, store: Store, challenge: string | null) {
-    const as = getAuth0Store(store);
-    const user = as.users.findOneBy("email", "alice@example.com")!;
+    const auth0Store = getAuth0Store(store);
+    const user = auth0Store.users.findOneBy("email", "alice@example.com")!;
     const form = new URLSearchParams({
       user_ref: user.user_id,
       redirect_uri: REDIRECT,
@@ -150,7 +150,6 @@ describe("authorization code + PKCE", () => {
     const id = decodeJwt(body.id_token);
     expect(id.aud).toBe(CLIENT_ID);
     expect(id.email).toBe("alice@example.com");
-    // Roles are injected as a namespaced claim.
     expect(id[`${base}/roles`]).toContain("admin");
   });
 
@@ -466,8 +465,8 @@ describe("email verification tickets", () => {
   it("creates and consumes a verification ticket", async () => {
     const { app, store } = createApp();
     const token = await mgmtToken(app);
-    const as = getAuth0Store(store);
-    const bob = as.users.findOneBy("email", "bob@example.com")!;
+    const auth0Store = getAuth0Store(store);
+    const bob = auth0Store.users.findOneBy("email", "bob@example.com")!;
     expect(bob.email_verified).toBe(false);
 
     const ticketRes = await app.request(`${base}/api/v2/tickets/email-verification`, {
@@ -477,7 +476,7 @@ describe("email verification tickets", () => {
     const ticketUrl = (await readJson(ticketRes)).ticket as string;
     const consume = await app.request(ticketUrl);
     expect(consume.status).toBe(200);
-    expect(as.users.findOneBy("email", "bob@example.com")!.email_verified).toBe(true);
+    expect(auth0Store.users.findOneBy("email", "bob@example.com")!.email_verified).toBe(true);
   });
 });
 
@@ -496,8 +495,8 @@ describe("log streams vs event streams", () => {
       headers: authHeaders(token),
     });
 
-    const as = getAuth0Store(store);
-    const deliveries = as.streamDeliveries.all();
+    const auth0Store = getAuth0Store(store);
+    const deliveries = auth0Store.streamDeliveries.all();
     const events = deliveries.filter((d) => d.kind === "event");
     const logs = deliveries.filter((d) => d.kind === "log");
     expect(events.some((d) => d.event_type === "user.created")).toBe(true);
@@ -513,13 +512,12 @@ describe("log streams vs event streams", () => {
       ...json({ name: "evt", subscriptions: [{ event_type: "login.succeeded" }] }),
       headers: authHeaders(token),
     });
-    // Creating a user emits user.created, which this stream is NOT subscribed to.
     await app.request(`${base}/api/v2/users`, {
       ...json({ email: "x@example.com", password: "x", connection: DB }),
       headers: authHeaders(token),
     });
-    const as = getAuth0Store(store);
-    expect(as.streamDeliveries.findBy("kind", "event").length).toBe(0);
+    const auth0Store = getAuth0Store(store);
+    expect(auth0Store.streamDeliveries.findBy("kind", "event").length).toBe(0);
   });
 });
 
@@ -547,7 +545,6 @@ describe("attack protection", () => {
       });
     for (let i = 0; i < 3; i++) await fail();
 
-    // Correct password is now rejected with too_many_attempts.
     const blocked = await app.request(`${base}/oauth/token`, {
       ...json({
         grant_type: "http://auth0.com/oauth/grant-type/password-realm",
@@ -588,7 +585,6 @@ describe("attack protection", () => {
       headers: authHeaders(token),
       body: JSON.stringify({ enabled: true, passwords: ["hunter2"] }),
     });
-    // Seed a user whose password is the breached one.
     await app.request(`${base}/api/v2/users`, {
       ...json({ email: "weak@example.com", password: "hunter2", connection: DB }),
       headers: authHeaders(token),
@@ -618,7 +614,6 @@ describe("device authorization flow", () => {
     );
     const { device_code } = await readJson(start);
 
-    // Before approval, polling is pending.
     const pending = await app.request(
       `${base}/oauth/token`,
       json({ grant_type: "urn:ietf:params:oauth:grant-type:device_code", device_code, client_id: CLIENT_ID }),
@@ -626,8 +621,8 @@ describe("device authorization flow", () => {
     expect(pending.status).toBe(403);
     expect((await readJson(pending)).error).toBe("authorization_pending");
 
-    const as = getAuth0Store(store);
-    const alice = as.users.findOneBy("email", "alice@example.com")!;
+    const auth0Store = getAuth0Store(store);
+    const alice = auth0Store.users.findOneBy("email", "alice@example.com")!;
     await app.request(`${base}/_emulate/device/approve`, json({ device_code, user_id: alice.user_id }));
 
     const done = await app.request(

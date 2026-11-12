@@ -7,7 +7,7 @@ import { issuerFromBaseUrl } from "../helpers.js";
 import { renderUniversalLogin, SERVICE_LABEL } from "./ui.js";
 import { recordLog } from "../events.js";
 
-// Minimal-but-real SAML 2.0 IdP. /samlp/:clientId renders Universal Login and
+// Minimal SAML 2.0 IdP. /samlp/:clientId renders Universal Login and
 // POSTs a genuinely RS256-signed <samlp:Response> to the client ACS. The
 // signature is a real enveloped XML-DSig over the assertion so SDKs that verify
 // it against the published certificate succeed. This is not a full SAML IdP
@@ -122,10 +122,9 @@ async function buildSamlResponse(args: {
   const { publicDerB64 } = await nodeKeys();
   const responseId = `_${randomUUID().replace(/-/g, "")}`;
   const assertionId = `_${randomUUID().replace(/-/g, "")}`;
-  const now = new Date(Date.now()).toISOString();
+  const now = new Date().toISOString();
   const notOnOrAfter = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
-  // Build the assertion, then its signature, then embed it (enveloped).
   const assertionBody =
     `<saml:Assertion xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" ID="${assertionId}" Version="2.0" IssueInstant="${now}">` +
     `<saml:Issuer>${xmlEscape(issuer)}</saml:Issuer>` +

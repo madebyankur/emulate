@@ -13,7 +13,7 @@ import {
 import { DEFAULT_DB_CONNECTION, generateUserId, nowUnix } from "../helpers.js";
 import { dispatchEvent, recordLog } from "../events.js";
 
-// Management API v2 — /api/v2/users and role assignment endpoints.
+// Management API v2: /api/v2/users and role assignment endpoints.
 export function userRoutes({ app, store, tokenMap }: RouteContext): void {
   const as = getAuth0Store(store);
 

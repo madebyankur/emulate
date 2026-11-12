@@ -29,7 +29,6 @@ function getCodes(store: Store): Map<string, PasswordlessCode> {
 
 // Generate a 6-digit numeric code.
 function generateCode(): string {
-  // Deterministic-friendly: 6 digits derived from crypto bytes.
   const n = (Math.abs(hashNow()) % 900000) + 100000;
   return String(n);
 }
@@ -91,7 +90,7 @@ export function ensurePasswordlessUser(store: Store, identifier: string, connect
 }
 
 export function passwordlessRoutes({ app, store }: RouteContext): void {
-  // POST /passwordless/start — issue a code to email or sms.
+  // POST /passwordless/start: issue a code to email or sms.
   app.post("/passwordless/start", async (c) => {
     const body = await readBody(c);
     const connection = typeof body.connection === "string" ? body.connection : "email";
@@ -117,7 +116,7 @@ export function passwordlessRoutes({ app, store }: RouteContext): void {
     return c.json({ _id: identifier, [connection === "sms" ? "phone_number" : "email"]: identifier, sent: true });
   });
 
-  // POST /passwordless/verify — verify a code and mark the identifier verified
+  // POST /passwordless/verify: verify a code and mark the identifier verified
   // (the legacy verify endpoint; the OTP grant on /oauth/token is preferred).
   app.post("/passwordless/verify", async (c) => {
     const body = await readBody(c);
@@ -138,7 +137,7 @@ export function passwordlessRoutes({ app, store }: RouteContext): void {
     return c.json({ verified: true });
   });
 
-  // GET /_emulate/passwordless/code — test helper to read the last code.
+  // GET /_emulate/passwordless/code: test helper to read the last code.
   app.get("/_emulate/passwordless/code", (c) => {
     const identifier = c.req.query("identifier") ?? "";
     const pending = findPasswordlessCode(store, identifier);

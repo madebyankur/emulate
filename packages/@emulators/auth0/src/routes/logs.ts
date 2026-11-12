@@ -2,7 +2,7 @@ import type { RouteContext } from "@emulators/core";
 import { getAuth0Store } from "../store.js";
 import { listEnvelope, parsePage, requireManagementAuth } from "../route-helpers.js";
 
-// Management API v2 — /api/v2/logs (tenant log events).
+// Management API v2: /api/v2/logs (tenant log events).
 export function logRoutes({ app, store, tokenMap }: RouteContext): void {
   const as = getAuth0Store(store);
 

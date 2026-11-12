@@ -2,7 +2,7 @@ import type { RouteContext } from "@emulators/core";
 import type { Store } from "@emulators/core";
 import { requireManagementAuth, readJsonBody } from "../route-helpers.js";
 
-// Tenant settings and Guardian (MFA) factors — stateful config read/write.
+// Tenant settings and Guardian (MFA) factors: stateful config read/write.
 interface TenantSettings {
   friendly_name: string;
   support_email: string;

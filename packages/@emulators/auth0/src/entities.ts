@@ -144,7 +144,7 @@ export interface Auth0UserEnrollment extends Entity {
 }
 
 // A Client Grant authorizes a client (machine-to-machine) for an API audience
-// with a fixed set of scopes — the backing store for client_credentials.
+// with a fixed set of scopes: the backing store for client_credentials.
 export interface Auth0ClientGrant extends Entity {
   grant_id: string;
   client_id: string;
@@ -209,7 +209,7 @@ export interface Auth0UserBlock extends Entity {
   created_at_unix: number;
 }
 
-// --- Extensibility (Theme C) ---
+// --- Extensibility ---
 
 // An Auth0 Action. `trigger` binds it to a flow (e.g. "post-login",
 // "credentials-exchange"). When `code` is present it is executed in a sandbox;
@@ -267,7 +267,7 @@ export interface Auth0Hook extends Entity {
   updated_at_unix: number;
 }
 
-// --- Sessions & jobs (Theme D) ---
+// --- Sessions & jobs ---
 
 // A user authentication session, created on successful token issuance.
 export interface Auth0Session extends Entity {

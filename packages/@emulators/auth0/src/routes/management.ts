@@ -17,7 +17,7 @@ import {
 import { generateAuth0Id, nowUnix } from "../helpers.js";
 import type { Auth0AppType } from "../entities.js";
 
-// Management API v2 — clients, connections, roles, organizations, resource
+// Management API v2: clients, connections, roles, organizations, resource
 // servers, client grants, and email-verification tickets.
 export function managementRoutes(ctx: RouteContext): void {
   clientRoutes(ctx);

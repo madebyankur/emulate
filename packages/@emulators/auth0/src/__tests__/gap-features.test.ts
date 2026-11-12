@@ -1,10 +1,7 @@
 import { decodeJwt } from "jose";
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { Hono, Store, WebhookDispatcher, authMiddleware, type TokenMap } from "@emulators/core";
-import { auth0Plugin, seedFromConfig } from "../index.js";
-
-// Tests for the gap-closure work: RBAC/token fidelity, Actions/Rules,
-// passwordless, MFA, Management breadth, and the auth protocols.
+import { auth0Plugin, getAuth0Store, seedFromConfig } from "../index.js";
 
 const base = "http://localhost:4321";
 const CLIENT_ID = "test-client";
@@ -39,7 +36,7 @@ function createApp(opts: SetupOptions = {}) {
   const tokenMap: TokenMap = new Map();
   const app = new Hono();
   app.use("*", authMiddleware(tokenMap));
-  auth0Plugin.register(app as never, store, webhooks, base, tokenMap);
+  auth0Plugin.register(app, store, webhooks, base, tokenMap);
   seedFromConfig(store, base, {
     users: [
       { email: "alice@example.com", password: "alice-pw", email_verified: true, name: "Alice", roles: ["admin"] },
@@ -68,7 +65,7 @@ function createApp(opts: SetupOptions = {}) {
     organizations: [{ name: "acme", display_name: "Acme", members: ["alice@example.com"] }],
     ...(opts.seed ?? {}),
   });
-  return { app: app as unknown as Hono, store, tokenMap };
+  return { app, store, tokenMap };
 }
 
 async function mgmtToken(app: Hono): Promise<string> {
@@ -117,11 +114,11 @@ describe("RBAC + token fidelity", () => {
     expect(claims.permissions).toBeUndefined();
   });
 
-  it("supports user + role permission management endpoints", async () => {
+  it("supports user permission management endpoints", async () => {
     const { app } = createApp();
     const token = await mgmtToken(app);
     const users = await readJson(await app.request(`${MGMT}users`, { headers: authHeaders(token) }));
-    const userId = users[0].user_id ?? users.users?.[0]?.user_id;
+    const userId = users[0].user_id;
     const post = await app.request(`${MGMT}users/${encodeURIComponent(userId)}/permissions`, {
       ...json({ permissions: [{ resource_server_identifier: API_AUDIENCE, permission_name: "write:items" }] }),
       headers: authHeaders(token),
@@ -130,7 +127,7 @@ describe("RBAC + token fidelity", () => {
     const list = await readJson(
       await app.request(`${MGMT}users/${encodeURIComponent(userId)}/permissions`, { headers: authHeaders(token) }),
     );
-    expect(list.map((p: any) => p.permission_name)).toContain("write:items");
+    expect(list.map((p: { permission_name: string }) => p.permission_name)).toContain("write:items");
   });
 });
 
@@ -231,26 +228,20 @@ describe("Passwordless", () => {
 
 describe("MFA", () => {
   it("challenges an enrolled-policy user and completes via the mfa-otp grant", async () => {
-    const { app } = createApp({ seed: { mfa: { required_users: [] } } });
-    // Require MFA for everyone to force the challenge.
-    const token = await mgmtToken(app);
-    // Turn on always-on MFA via the seed by re-creating with config.
-    const { app: app2 } = createApp({ seed: { mfa: { always_on: true } } });
-    const res = await passwordLogin(app2);
+    const { app } = createApp({ seed: { mfa: { always_on: true } } });
+    const res = await passwordLogin(app);
     expect(res.status).toBe(403);
     const challenge = await readJson(res);
     expect(challenge.error).toBe("mfa_required");
     expect(challenge.mfa_token).toBeTruthy();
 
-    // Associate an authenticator with the mfa_token.
-    const assoc = await app2.request(`${base}/mfa/associate`, {
+    const assoc = await app.request(`${base}/mfa/associate`, {
       ...json({ authenticator_types: ["otp"] }),
       headers: { Authorization: `Bearer ${challenge.mfa_token}`, "Content-Type": "application/json" },
     });
     expect(assoc.status).toBe(200);
 
-    // Complete with the deterministic emulator OTP.
-    const complete = await app2.request(
+    const complete = await app.request(
       `${base}/oauth/token`,
       json({
         grant_type: "http://auth0.com/oauth/grant-type/mfa-otp",
@@ -262,7 +253,6 @@ describe("MFA", () => {
     );
     expect(complete.status).toBe(200);
     expect((await readJson(complete)).access_token).toBeTruthy();
-    void token;
   });
 });
 
@@ -271,7 +261,7 @@ describe("Management API breadth", () => {
     const { app } = createApp();
     const token = await mgmtToken(app);
     const users = await readJson(await app.request(`${MGMT}users`, { headers: authHeaders(token) }));
-    const userId = (users[0] ?? users.users?.[0]).user_id;
+    const userId = users[0].user_id;
     const res = await app.request(`${MGMT}jobs/verification-email`, {
       ...json({ user_id: userId }),
       headers: authHeaders(token),
@@ -353,16 +343,13 @@ describe("Auth protocols", () => {
     expect(await authorize.text()).toContain("alice@example.com");
   });
 
-  it("issues a signed SAML response", async () => {
+  it("does not 500 on a SAML callback with a malformed user_ref", async () => {
     const { app } = createApp();
-    const users = await import("../store.js").then((m) => m.getAuth0Store);
-    void users;
     const res = await app.request(`${base}/samlp/${CLIENT_ID}/callback`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({ user_ref: "auth0|", redirect_uri: REDIRECT, state: "rs" }).toString(),
     });
-    // user_ref is wrong here on purpose-free path; just assert it doesn't 500.
     expect([200, 400]).toContain(res.status);
   });
 
@@ -373,14 +360,11 @@ describe("Auth protocols", () => {
       json({ client_id: CLIENT_ID, scope: "openid", binding_message: "go" }),
     );
     const { auth_req_id } = await readJson(start);
-    // Poll before approval -> pending.
     const pending = await app.request(
       `${base}/oauth/token`,
       json({ grant_type: "urn:openid:params:grant-type:ciba", auth_req_id, client_id: CLIENT_ID }),
     );
     expect((await readJson(pending)).error).toBe("authorization_pending");
-    // Approve via the test helper.
-    const { getAuth0Store } = await import("../store.js");
     const userId = getAuth0Store(store).users.all()[0].user_id;
     await app.request(`${base}/_emulate/ciba/approve`, json({ auth_req_id, user_id: userId }));
     const done = await app.request(
@@ -396,8 +380,4 @@ describe("Auth protocols", () => {
     const res = await app.request(`${base}/tokeninfo`);
     expect(res.status).toBe(403);
   });
-});
-
-beforeEach(() => {
-  // Each test builds its own app/store, so no shared state to reset.
 });

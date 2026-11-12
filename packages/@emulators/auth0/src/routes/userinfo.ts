@@ -3,7 +3,7 @@ import { getAuth0Store } from "../store.js";
 import { getAccessTokens } from "../route-helpers.js";
 import { userDisplayName } from "../helpers.js";
 
-// GET /userinfo — OIDC user info for the bearer access token. We resolve the
+// GET /userinfo: OIDC user info for the bearer access token. We resolve the
 // user from the OAuth access-token store (set at token issuance).
 export function userinfoRoutes({ app, store }: RouteContext): void {
   const as = getAuth0Store(store);

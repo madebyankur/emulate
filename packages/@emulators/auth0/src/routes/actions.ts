@@ -183,14 +183,13 @@ function triggerApi({ app, store, tokenMap }: RouteContext): void {
     return c.json({ bindings });
   });
 
-  // PATCH bindings — replace the ordered binding set for a trigger.
+  // PATCH bindings: replace the ordered binding set for a trigger.
   app.patch("/api/v2/actions/triggers/:trigger/bindings", async (c) => {
     const auth = requireManagementAuth(c, tokenMap);
     if (auth instanceof Response) return auth;
     const trigger = c.req.param("trigger");
     const body = await readJsonBody(c);
     const incoming = Array.isArray(body.bindings) ? (body.bindings as unknown[]) : [];
-    // Clear existing bindings for the trigger.
     for (const existing of as.actionBindings.findBy("trigger", trigger)) as.actionBindings.delete(existing.id);
     let order = 0;
     for (const entry of incoming) {

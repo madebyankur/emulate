@@ -280,7 +280,6 @@ async function issueUserTokens(
     response.id_token = await signIdToken(baseUrl, user, args.clientId, args.nonce, extra);
   }
 
-  // Record a session and update login bookkeeping.
   as.sessions.insert({
     session_id: generateAuth0Id(),
     user_id: user.user_id,
@@ -296,7 +295,7 @@ async function issueUserTokens(
 export function tokenRoutes({ app, store, baseUrl, tokenMap }: RouteContext): void {
   const as = getAuth0Store(store);
 
-  // POST /oauth/token — the multiplexed grant endpoint.
+  // POST /oauth/token: the multiplexed grant endpoint.
   app.post("/oauth/token", async (c) => {
     const body = await parseBody(c);
     const grantType = body.grant_type ?? "";
@@ -594,7 +593,7 @@ export function tokenRoutes({ app, store, baseUrl, tokenMap }: RouteContext): vo
       return resp;
     }
 
-    // --- CIBA (backchannel) — poll an auth_req_id ---
+    // --- CIBA (backchannel): poll an auth_req_id ---
     if (grantType === CIBA_GRANT) {
       const authReqId = body.auth_req_id ?? "";
       const pending = getCibaRequests(store).get(authReqId);
@@ -621,7 +620,7 @@ export function tokenRoutes({ app, store, baseUrl, tokenMap }: RouteContext): vo
     return oauthError(c, 400, "unsupported_grant_type", `Grant type '${grantType}' not supported.`);
   });
 
-  // POST /oauth/revoke — revoke a refresh token.
+  // POST /oauth/revoke: revoke a refresh token.
   app.post("/oauth/revoke", async (c) => {
     const body = await parseBody(c);
     const token = body.token ?? "";
@@ -631,7 +630,7 @@ export function tokenRoutes({ app, store, baseUrl, tokenMap }: RouteContext): vo
     return c.body(null, 200);
   });
 
-  // POST /oauth/device/code — start the device authorization flow.
+  // POST /oauth/device/code: start the device authorization flow.
   app.post("/oauth/device/code", async (c) => {
     const body = await parseBody(c);
     const clientId = body.client_id ?? "";
@@ -658,7 +657,7 @@ export function tokenRoutes({ app, store, baseUrl, tokenMap }: RouteContext): vo
     });
   });
 
-  // POST /_emulate/device/approve — test helper to approve a pending device code.
+  // POST /_emulate/device/approve: test helper to approve a pending device code.
   app.post("/_emulate/device/approve", async (c) => {
     const body = await parseBody(c);
     const deviceCode = body.device_code ?? "";
