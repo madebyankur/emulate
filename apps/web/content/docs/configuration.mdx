@@ -502,6 +502,38 @@ twilio:
       - friendly_name: Local Conversations
 ```
 
+## Auth0 Seed Config
+
+```yaml
+auth0:
+  users:
+    - email: user@example.com
+      email_verified: true
+      password: Password123!
+      name: Test User
+      connection: Username-Password-Authentication
+  clients:
+    - client_id: auth0_emulate_client
+      client_secret: auth0_emulate_secret
+      name: My Auth0 App
+      app_type: regular_web
+      callbacks: [http://localhost:3000/api/auth/callback]
+      allowed_logout_urls: [http://localhost:3000]
+      grant_types: [authorization_code, refresh_token, client_credentials, password]
+  resource_servers:
+    - name: My API
+      identifier: https://api.example.com
+      scopes: [read:items, write:items]
+  organizations:
+    - name: acme
+      display_name: Acme Inc
+      enabled_connections: [Username-Password-Authentication]
+      members: [user@example.com]
+  mfa:
+    always_on: false
+  breached_passwords: [password, 123456, qwerty]
+```
+
 ## Custom emulators
 
 Custom definitions created with `defineEmulator` from `emulate` work in the CLI, in-process tests, and both framework adapters. The same definition provides typed state, HTTP handlers, reset, versioned snapshots, and optional inspection/persistence. See [Custom emulators](/docs/custom-emulators) for the quickstart, API reference, and complete lifecycle semantics.
