@@ -47,8 +47,6 @@ function json(body: unknown): RequestInit {
   return { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
 }
 
-// Response.json() is typed as Promise<unknown> under strict mode; this keeps
-// assertions ergonomic in the test file.
 async function readJson(res: Response): Promise<any> {
   return res.json();
 }
@@ -415,14 +413,26 @@ describe("Management API", () => {
     expect(typeof body.total).toBe("number");
   });
 
-  it("manages resource servers and rejects duplicates", async () => {
+  it("creates a resource server and rejects a duplicate identifier", async () => {
     const { app } = createApp();
     const token = await mgmtToken(app);
+    const created = await app.request(`${base}/api/v2/resource-servers`, {
+      ...json({ identifier: "https://new.example.com", name: "New API" }),
+      headers: authHeaders(token),
+    });
+    expect(created.status).toBe(201);
     const dup = await app.request(`${base}/api/v2/resource-servers`, {
       ...json({ identifier: API_AUDIENCE, name: "dup" }),
       headers: authHeaders(token),
     });
     expect(dup.status).toBe(409);
+  });
+
+  it("returns 404 for a user id with a stray percent sign instead of throwing", async () => {
+    const { app } = createApp();
+    const token = await mgmtToken(app);
+    const res = await app.request(`${base}/api/v2/users/50%`, { headers: authHeaders(token) });
+    expect(res.status).toBe(404);
   });
 });
 

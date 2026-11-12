@@ -1,8 +1,7 @@
-import type { Context } from "@emulators/core";
-import type { AppEnv, RouteContext, Store } from "@emulators/core";
+import type { RouteContext, Store } from "@emulators/core";
 import { getAuth0Store } from "../store.js";
 import { generateUserId, nowUnix } from "../helpers.js";
-import { oauthError } from "../route-helpers.js";
+import { oauthError, readFormOrJsonBody } from "../route-helpers.js";
 import { recordLog } from "../events.js";
 
 // Passwordless connections: an emailed/texted one-time code logs the user in.
@@ -92,7 +91,7 @@ export function ensurePasswordlessUser(store: Store, identifier: string, connect
 export function passwordlessRoutes({ app, store }: RouteContext): void {
   // POST /passwordless/start: issue a code to email or sms.
   app.post("/passwordless/start", async (c) => {
-    const body = await readBody(c);
+    const body = await readFormOrJsonBody(c);
     const connection = typeof body.connection === "string" ? body.connection : "email";
     const identifier =
       connection === "sms"
@@ -119,7 +118,7 @@ export function passwordlessRoutes({ app, store }: RouteContext): void {
   // POST /passwordless/verify: verify a code and mark the identifier verified
   // (the legacy verify endpoint; the OTP grant on /oauth/token is preferred).
   app.post("/passwordless/verify", async (c) => {
-    const body = await readBody(c);
+    const body = await readFormOrJsonBody(c);
     const connection = typeof body.connection === "string" ? body.connection : "email";
     const identifier =
       connection === "sms"
@@ -144,14 +143,4 @@ export function passwordlessRoutes({ app, store }: RouteContext): void {
     if (!pending) return c.json({ error: "not_found" }, 404);
     return c.json({ identifier: pending.identifier, connection: pending.connection, code: pending.code });
   });
-}
-
-async function readBody(c: Context<AppEnv>): Promise<Record<string, unknown>> {
-  const contentType = c.req.header("Content-Type") ?? "";
-  try {
-    if (contentType.includes("application/json")) return (await c.req.json()) as Record<string, unknown>;
-    return Object.fromEntries(new URLSearchParams(await c.req.text()));
-  } catch {
-    return {};
-  }
 }

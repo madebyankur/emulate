@@ -55,6 +55,16 @@ export async function readJsonBody(c: Context<AppEnv>): Promise<Record<string, u
   }
 }
 
+export async function readFormOrJsonBody(c: Context<AppEnv>): Promise<Record<string, unknown>> {
+  const contentType = c.req.header("Content-Type") ?? "";
+  try {
+    if (contentType.includes("application/json")) return (await c.req.json()) as Record<string, unknown>;
+    return Object.fromEntries(new URLSearchParams(await c.req.text()));
+  } catch {
+    return {};
+  }
+}
+
 export function parsePage(c: Context<AppEnv>): { page: number; perPage: number; includeTotals: boolean } {
   const page = Math.max(Number.parseInt(c.req.query("page") ?? "0", 10) || 0, 0);
   const perPage = Math.min(Math.max(Number.parseInt(c.req.query("per_page") ?? "50", 10) || 50, 1), 100);
@@ -163,8 +173,7 @@ export function resourceServerResponse(rs: Auth0ResourceServer): Record<string, 
 }
 
 export function findUserByRef(as: Auth0Store, ref: string): Auth0User | undefined {
-  const decoded = decodeURIComponent(ref);
-  return as.users.findOneBy("user_id", decoded);
+  return as.users.findOneBy("user_id", ref);
 }
 
 // Resolve the roles assigned to a user as role names (for id_token claims).

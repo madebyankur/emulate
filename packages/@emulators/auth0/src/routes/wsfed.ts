@@ -1,9 +1,10 @@
-import { createSign, createHash, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import type { RouteContext } from "@emulators/core";
 import { renderFormPostPage } from "@emulators/core";
 import { getAuth0Store } from "../store.js";
 import { nodeKeys } from "../keys.js";
 import { issuerFromBaseUrl } from "../helpers.js";
+import { buildSignature, xmlEscape } from "../xml-signature.js";
 import { renderUniversalLogin, SERVICE_LABEL } from "./ui.js";
 import { recordLog } from "../events.js";
 
@@ -11,40 +12,6 @@ import { recordLog } from "../events.js";
 // Universal Login then form-POSTs a wresult containing a signed SAML 1.1
 // assertion to the wreply (client callback). Shares the RS256 signing key with
 // the rest of the emulator so the assertion verifies against the metadata cert.
-
-function xmlEscape(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
-
-async function buildSignature(signedElementXml: string, referenceId: string, certB64: string): Promise<string> {
-  const digest = createHash("sha256").update(signedElementXml).digest("base64");
-  const signedInfo =
-    `<ds:SignedInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">` +
-    `<ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"></ds:CanonicalizationMethod>` +
-    `<ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"></ds:SignatureMethod>` +
-    `<ds:Reference URI="#${referenceId}">` +
-    `<ds:Transforms>` +
-    `<ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>` +
-    `<ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"></ds:Transform>` +
-    `</ds:Transforms>` +
-    `<ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"></ds:DigestMethod>` +
-    `<ds:DigestValue>${digest}</ds:DigestValue>` +
-    `</ds:Reference></ds:SignedInfo>`;
-  const { privateKey } = await nodeKeys();
-  const signatureValue = createSign("RSA-SHA256").update(signedInfo).sign(privateKey).toString("base64");
-  return (
-    `<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">` +
-    signedInfo +
-    `<ds:SignatureValue>${signatureValue}</ds:SignatureValue>` +
-    `<ds:KeyInfo><ds:X509Data><ds:X509Certificate>${certB64}</ds:X509Certificate></ds:X509Data></ds:KeyInfo>` +
-    `</ds:Signature>`
-  );
-}
 
 export function wsfedRoutes({ app, store, baseUrl }: RouteContext): void {
   const as = getAuth0Store(store);

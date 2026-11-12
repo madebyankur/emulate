@@ -120,7 +120,7 @@ export function attackProtectionRoutes({ app, store, tokenMap }: RouteContext): 
   app.get("/api/v2/user-blocks/:id", (c) => {
     const auth = requireManagementAuth(c, tokenMap);
     if (auth instanceof Response) return auth;
-    const id = decodeURIComponent(c.req.param("id"));
+    const id = c.req.param("id");
     const user = as.users.findOneBy("user_id", id);
     const identifier = user?.email ?? id;
     const blocks = as.userBlocks.findBy("identifier", identifier);
@@ -130,7 +130,7 @@ export function attackProtectionRoutes({ app, store, tokenMap }: RouteContext): 
   app.delete("/api/v2/user-blocks/:id", (c) => {
     const auth = requireManagementAuth(c, tokenMap);
     if (auth instanceof Response) return auth;
-    const id = decodeURIComponent(c.req.param("id"));
+    const id = c.req.param("id");
     const user = as.users.findOneBy("user_id", id);
     unblock(store, user?.email ?? id);
     return new Response(null, { status: 204 });

@@ -4,7 +4,7 @@ import type { AppEnv, RouteContext, Store } from "@emulators/core";
 import type { Auth0User } from "../entities.js";
 import { getAuth0Store } from "../store.js";
 import { generateAuth0Id, nowUnix } from "../helpers.js";
-import { oauthError } from "../route-helpers.js";
+import { oauthError, readFormOrJsonBody } from "../route-helpers.js";
 
 // --- MFA configuration (whether a login must satisfy MFA) ---
 export interface MfaConfig {
@@ -136,7 +136,7 @@ export function mfaRoutes({ app, store }: RouteContext): void {
   app.post("/mfa/associate", async (c) => {
     const challenge = challengeFromAuth(c, store);
     if (!challenge) return oauthError(c, 401, "invalid_token", "A valid mfa_token is required.");
-    const body = await readBody(c);
+    const body = await readFormOrJsonBody(c);
     const types = Array.isArray(body.authenticator_types) ? (body.authenticator_types as string[]) : ["otp"];
     const type = types[0] ?? "otp";
     const oobChannels = Array.isArray(body.oob_channels) ? (body.oob_channels as string[]) : [];
@@ -163,7 +163,7 @@ export function mfaRoutes({ app, store }: RouteContext): void {
 
   // Start a challenge against an authenticator (issues/sends a code).
   app.post("/mfa/challenge", async (c) => {
-    const body = await readBody(c);
+    const body = await readFormOrJsonBody(c);
     const mfaToken = typeof body.mfa_token === "string" ? body.mfa_token : "";
     const challenge = getMfaChallenge(store, mfaToken);
     if (!challenge) return oauthError(c, 401, "invalid_token", "A valid mfa_token is required.");
@@ -191,14 +191,4 @@ function challengeFromAuth(c: Context<AppEnv>, store: Store): MfaChallenge | und
   const token = header.startsWith("Bearer ") ? header.slice(7) : "";
   if (!token) return undefined;
   return getMfaChallenge(store, token);
-}
-
-async function readBody(c: Context<AppEnv>): Promise<Record<string, unknown>> {
-  const contentType = c.req.header("Content-Type") ?? "";
-  try {
-    if (contentType.includes("application/json")) return (await c.req.json()) as Record<string, unknown>;
-    return Object.fromEntries(new URLSearchParams(await c.req.text()));
-  } catch {
-    return {};
-  }
 }

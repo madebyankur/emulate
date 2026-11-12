@@ -516,7 +516,7 @@ function resourceServerRoutes({ app, store, tokenMap }: RouteContext): void {
   app.patch("/api/v2/resource-servers/:id", async (c) => {
     const auth = requireManagementAuth(c, tokenMap);
     if (auth instanceof Response) return auth;
-    const id = decodeURIComponent(c.req.param("id"));
+    const id = c.req.param("id");
     const rs = as.resourceServers.findOneBy("resource_server_id", id) ?? as.resourceServers.findOneBy("identifier", id);
     if (!rs) return mgmtError(c, 404, "Not Found", "The resource server does not exist.", "inexistent_resource_server");
     const body = await readJsonBody(c);
@@ -538,7 +538,7 @@ function resourceServerRoutes({ app, store, tokenMap }: RouteContext): void {
   app.get("/api/v2/resource-servers/:id", (c) => {
     const auth = requireManagementAuth(c, tokenMap);
     if (auth instanceof Response) return auth;
-    const id = decodeURIComponent(c.req.param("id"));
+    const id = c.req.param("id");
     const rs = as.resourceServers.findOneBy("resource_server_id", id) ?? as.resourceServers.findOneBy("identifier", id);
     if (!rs) return mgmtError(c, 404, "Not Found", "The resource server does not exist.", "inexistent_resource_server");
     return c.json(resourceServerResponse(rs));
@@ -547,7 +547,7 @@ function resourceServerRoutes({ app, store, tokenMap }: RouteContext): void {
   app.delete("/api/v2/resource-servers/:id", (c) => {
     const auth = requireManagementAuth(c, tokenMap);
     if (auth instanceof Response) return auth;
-    const id = decodeURIComponent(c.req.param("id"));
+    const id = c.req.param("id");
     const rs = as.resourceServers.findOneBy("resource_server_id", id) ?? as.resourceServers.findOneBy("identifier", id);
     if (rs) as.resourceServers.delete(rs.id);
     return new Response(null, { status: 204 });

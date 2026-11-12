@@ -1,8 +1,7 @@
 import { randomBytes } from "node:crypto";
-import type { Context } from "@emulators/core";
-import type { AppEnv, RouteContext, Store } from "@emulators/core";
+import type { RouteContext, Store } from "@emulators/core";
 import { getAuth0Store } from "../store.js";
-import { oauthError } from "../route-helpers.js";
+import { oauthError, readFormOrJsonBody } from "../route-helpers.js";
 
 // CIBA (Client-Initiated Backchannel Authentication). A client starts a login
 // out-of-band; the end-user approves on another channel; the client polls the
@@ -32,7 +31,7 @@ export function cibaRoutes({ app, store }: RouteContext): void {
 
   // POST /bc-authorize: start a backchannel authentication request.
   app.post("/bc-authorize", async (c) => {
-    const body = await readBody(c);
+    const body = await readFormOrJsonBody(c);
     const clientId = str(body.client_id);
     const scope = str(body.scope) || "openid";
     const audience = str(body.audience);
@@ -53,7 +52,7 @@ export function cibaRoutes({ app, store }: RouteContext): void {
 
   // POST /_emulate/ciba/approve: test helper to approve a pending request.
   app.post("/_emulate/ciba/approve", async (c) => {
-    const body = await readBody(c);
+    const body = await readFormOrJsonBody(c);
     const authReqId = str(body.auth_req_id);
     const userId = str(body.user_id);
     const pending = getCibaRequests(store).get(authReqId);
@@ -67,14 +66,4 @@ export function cibaRoutes({ app, store }: RouteContext): void {
 
 function str(v: unknown): string {
   return typeof v === "string" ? v : "";
-}
-
-async function readBody(c: Context<AppEnv>): Promise<Record<string, unknown>> {
-  const contentType = c.req.header("Content-Type") ?? "";
-  try {
-    if (contentType.includes("application/json")) return (await c.req.json()) as Record<string, unknown>;
-    return Object.fromEntries(new URLSearchParams(await c.req.text()));
-  } catch {
-    return {};
-  }
 }
